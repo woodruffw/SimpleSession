@@ -22,9 +22,9 @@ state.
 ## Installation
 
 Manually:
-1. Clone this repository into your packages directory (`Preferences -> Browse
+* Clone this repository into your packages directory (`Preferences -> Browse
 Packages...`).
-2. Done.
+* Done.
 
 Sublime Package Control support is coming.
 
