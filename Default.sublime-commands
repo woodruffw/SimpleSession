@@ -1,0 +1,14 @@
+[
+	{
+		"caption": "SimpleSession: Save",
+		"command": "save_session"
+	},
+	{
+		"caption": "SimpleSession: Load",
+		"command": "load_session"
+	},
+	{
+		"caption": "SimpleSession: Delete",
+		"command": "delete_session"
+	}
+]

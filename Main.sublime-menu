@@ -1,0 +1,46 @@
+[
+    {
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "mnemonic": "P",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "SimpleSession",
+                        "children":
+                        [
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/SimpleSession/README.md",
+                                    "platform": "Windows"
+                                },
+                                "caption": "Help"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/SimpleSession/README.md",
+                                    "platform": "OSX"
+                                },
+                                "caption": "Help"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/SimpleSession/README.md",
+                                    "platform": "Linux"
+                                },
+                                "caption": "Help"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
