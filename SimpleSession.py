@@ -3,20 +3,21 @@ import os
 import glob
 import json
 
-PATH = os.path.join(sublime.packages_path(), 'User', 'simplesession')
-
-try:
-	os.makedirs(PATH)
-except Exception:
-	pass
-
 def error_message(*args):
 	sublime.error_message(' '.join(list(args)))
 
+def get_path():
+	return os.path.join(sublime.packages_path(), 'User', 'simplesession')
+
 def get_sessions():
-	pathnames = glob.glob(os.path.join(PATH, '*'))
+	pathnames = glob.glob(os.path.join(get_path(), '*'))
 	names = [os.path.basename(path) for path in pathnames]
 	return names
+
+try:
+	os.makedirs(get_path())
+except Exception:
+	pass
 
 class SaveSession(sublime_plugin.WindowCommand):
 	def run(self):
@@ -29,7 +30,7 @@ class SaveSession(sublime_plugin.WindowCommand):
 		)
 
 	def save_session(self, name):
-		session = os.path.join(PATH, name)
+		session = os.path.join(get_path(), name)
 
 		try:
 			open(session, 'w').close()
@@ -59,7 +60,9 @@ class SaveSession(sublime_plugin.WindowCommand):
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
-		sessions = get_sessions()
+		pathnames = glob.glob(os.path.join(get_path(), '*'))
+		sessions = [os.path.basename(path) for path in pathnames]
+		print(sessions)
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
@@ -74,7 +77,7 @@ class LoadSession(sublime_plugin.WindowCommand):
 		if idx < 0:
 			return
 
-		self.load(os.path.join(PATH, get_sessions()[idx]))
+		self.load(os.path.join(get_path(), get_sessions()[idx]))
 
 	def load(self, session):
 		with open(session) as sess_file:
@@ -116,5 +119,5 @@ class DeleteSession(sublime_plugin.WindowCommand):
 		if idx < 0:
 			return
 
-		os.unlink(os.path.join(PATH, get_sessions()[idx]))
+		os.unlink(os.path.join(get_path(), get_sessions()[idx]))
 

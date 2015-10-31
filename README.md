@@ -19,6 +19,13 @@ state.
 * Will probably crash/do something wrong if you try to load a non-session file.
 * Probably won't work on Sublime Text 2. I haven't tried it.
 
+## Demo
+
+<video controls>
+	<source src="demo/demo.mp4" type="video/mp4">
+	Your browser does not support the video tag.
+</video>
+
 ## Installation
 
 Manually:
