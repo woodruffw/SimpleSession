@@ -21,12 +21,15 @@ state.
 
 ## Installation
 
-Manually:
+If you have Package Control installed:
+* Open the Command Palette (Ctrl+Shift+P)
+* Go to `Package Control: Install Package`
+* Search for "SimpleSession" and press Enter to install
+
+If you don't have Package Control or want to install manually for whatever
+reason:
 * Clone this repository into your packages directory (`Preferences -> Browse
 Packages...`).
-* Done.
-
-Sublime Package Control support is coming.
 
 ## Usage
 
