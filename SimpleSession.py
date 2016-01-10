@@ -21,6 +21,9 @@ except Exception:
 
 class SaveSession(sublime_plugin.WindowCommand):
 	def run(self):
+		self.get_session_name_and_save()
+
+	def get_session_name_and_save(self):
 		self.window.show_input_panel(
 			"Session name:",
 			"",
@@ -52,11 +55,22 @@ class SaveSession(sublime_plugin.WindowCommand):
 			'layout': window.get_layout()
 		}
 
-		sess_file = open(session, 'w')
+		with open(session, 'w') as sess_file:
+			json.dump(data, sess_file, indent=4)
 
-		json.dump(data, sess_file, indent=4)
+class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
+	def run(self):
+		self.window.show_input_panel(
+			"Session name:",
+			"",
+			on_done=self.save_and_close_session,
+			on_change=None,
+			on_cancel=None
+		)
 
-		sess_file.close()
+	def save_and_close_session(self, name):
+		super(SaveAndCloseSession, self).save_session(name)
+		[view.close() for view in self.window.views()]
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
@@ -107,7 +121,7 @@ class DeleteSession(sublime_plugin.WindowCommand):
 		sessions = get_sessions()
 
 		if not sessions:
-			sublime.message_dialog("No sessions available to load.")
+			sublime.message_dialog("No sessions available to delete.")
 			return
 
 		sublime.active_window().show_quick_panel(

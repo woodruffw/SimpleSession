@@ -41,15 +41,19 @@ Command Palette (Ctrl+Shift+P) operation:
 SimpleSession: Delete
 SimpleSession: Load
 SimpleSession: Save
+SimpleSession: Save and Close
 ```
 
 `Delete` and `Load` give you a list of sessions to chose from, and `Save`
-prompts you for a filename to save the current session with.
+prompts you for a filename to save the current session with. `Save and Close`
+operates identically to `Save`, but closes all open files in the window after
+saving.
 
 Like Session Manager, these commands can be bound:
 
 ```
 save_session
+save_and_close_session
 load_session
 delete_session
 ```

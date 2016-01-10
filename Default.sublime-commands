@@ -4,6 +4,10 @@
 		"command": "save_session"
 	},
 	{
+		"caption": "SimpleSession: Save and Close",
+		"command": "save_and_close_session"
+	},
+	{
 		"caption": "SimpleSession: Load",
 		"command": "load_session"
 	},
