@@ -48,7 +48,13 @@ class SaveSession(sublime_plugin.WindowCommand):
 		file_groups = {}
 
 		for i in range(window.num_groups()):
-			file_groups[i] = [view.file_name() for view in window.views_in_group(i) if view.file_name() != None]
+			file_list = []
+			for view in window.views_in_group(i):
+				if view.file_name() != None:
+					file_list.append(view.file_name())
+				else:
+					file_list.append("buffer:" + view.substr(sublime.Region(0, view.size())))
+				file_groups[i] = file_list
 
 		data = {
 			'groups': file_groups,
@@ -76,7 +82,6 @@ class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
 		pathnames = glob.glob(os.path.join(get_path(), '*'))
 		sessions = [os.path.basename(path) for path in pathnames]
-		print(sessions)
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
@@ -110,11 +115,15 @@ class LoadSession(sublime_plugin.WindowCommand):
 
 		window.set_layout(layout)
 
-		for group, filenames in groups.items():
+		for group, files in groups.items():
 			window.focus_group(int(group))
 
-			for filename in filenames:
-				window.open_file(filename)
+			for file in files:
+				# if the string starts with buffer, it's an inline buffer and not a filename
+				if file.startswith('buffer:'):
+					window.new_file().run_command('insert', {'characters': file[7:]})
+				else:
+					window.open_file(file)
 
 class DeleteSession(sublime_plugin.WindowCommand):
 	def run(self):

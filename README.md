@@ -13,6 +13,7 @@ allow per-window saving or layout saving.
 state.
 * Saves and restores window layout and file grouping.
 * Only opens a new window if your current one is empty.
+* Restores unsaved buffers (but *not* unsaved file changes).
 
 ## Cons
 * Doesn't care about your Sublime Text project files (this might be a 'pro').
