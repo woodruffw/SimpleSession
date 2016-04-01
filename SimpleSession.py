@@ -1,23 +1,19 @@
-import sublime, sublime_plugin
-import os
-import glob
+from glob import glob
 import json
+import os import path
+import sublime
+import sublime_plugin
 
 def error_message(*args):
-	sublime.error_message(' '.join(list(args)))
+	sublime.error_message(' '.join(args))
 
 def get_path():
-	return os.path.join(sublime.packages_path(), 'User', 'simplesession')
+	return path.join(sublime.packages_path(), 'User', 'simplesession')
 
 def get_sessions():
-	pathnames = glob.glob(os.path.join(get_path(), '*'))
-	names = [os.path.basename(path) for path in pathnames]
+	pathnames = glob(path.join(get_path(), '*'))
+	names = [path.basename(path) for path in pathnames]
 	return names
-
-try:
-	os.makedirs(get_path())
-except Exception:
-	pass
 
 class SaveSession(sublime_plugin.WindowCommand):
 	def run(self):
@@ -33,24 +29,25 @@ class SaveSession(sublime_plugin.WindowCommand):
 		)
 
 	def save_session(self, name):
-		session = os.path.join(get_path(), name)
+		session = path.join(get_path(), name)
 
 		try:
+			os.makedirs(get_path(), exist_ok=True)
 			open(session, 'w').close()
 			os.unlink(session)
 		except OSError:
 			error_message("Invalid Session Name:", session)
 			return
 
-		self.save(session, self.window)
+		self.save(session)
 
-	def save(self, session, window):
+	def save(self, session):
 		file_groups = {}
 
-		for i in range(window.num_groups()):
+		for i in range(self.window.num_groups()):
 			file_list = []
-			for view in window.views_in_group(i):
-				if view.file_name() != None:
+			for view in self.window.views_in_group(i):
+				if view.file_name():
 					file_list.append(view.file_name())
 				else:
 					file_list.append("buffer:" + view.substr(sublime.Region(0, view.size())))
@@ -58,7 +55,7 @@ class SaveSession(sublime_plugin.WindowCommand):
 
 		data = {
 			'groups': file_groups,
-			'layout': window.get_layout()
+			'layout': self.window.get_layout()
 		}
 
 		with open(session, 'w') as sess_file:
@@ -80,8 +77,8 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
-		pathnames = glob.glob(os.path.join(get_path(), '*'))
-		sessions = [os.path.basename(path) for path in pathnames]
+		pathnames = glob(path.join(get_path(), '*'))
+		sessions = [path.basename(path) for path in pathnames]
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
@@ -93,10 +90,8 @@ class LoadSession(sublime_plugin.WindowCommand):
 		)
 
 	def handle_selection(self, idx):
-		if idx < 0:
-			return
-
-		self.load(os.path.join(get_path(), get_sessions()[idx]))
+		if idx >= 0:
+			self.load(path.join(get_path(), get_sessions()[idx]))
 
 	def load(self, session):
 		with open(session) as sess_file:
@@ -106,7 +101,7 @@ class LoadSession(sublime_plugin.WindowCommand):
 		layout = data['layout']
 
 		window = self.window
-		open_files = [view.file_name() for view in window.views() if view.file_name() != None]
+		open_files = [view.file_name() for view in window.views() if view.file_name()]
 
 		# if the current window has open files, load the session in a new one
 		if open_files:
@@ -139,8 +134,5 @@ class DeleteSession(sublime_plugin.WindowCommand):
 		)
 
 	def handle_selection(self, idx):
-		if idx < 0:
-			return
-
-		os.unlink(os.path.join(get_path(), get_sessions()[idx]))
-
+		if idx >= 0:
+			os.unlink(path.join(get_path(), get_sessions()[idx]))
