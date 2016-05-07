@@ -1,6 +1,6 @@
 from glob import glob
 import json
-import os import path
+from os import path
 import sublime
 import sublime_plugin
 
@@ -12,7 +12,7 @@ def get_path():
 
 def get_sessions():
 	pathnames = glob(path.join(get_path(), '*'))
-	names = [path.basename(path) for path in pathnames]
+	names = [path.basename(p) for p in pathnames]
 	return names
 
 class SaveSession(sublime_plugin.WindowCommand):
@@ -73,12 +73,15 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 
 	def save_and_close_session(self, name):
 		super(SaveAndCloseSession, self).save_session(name)
-		[view.close() for view in self.window.views()]
+
+		for view in self.window.views():
+			view.set_status('ss', '')
+			view.close()
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
 		pathnames = glob(path.join(get_path(), '*'))
-		sessions = [path.basename(path) for path in pathnames]
+		sessions = [path.basename(p) for p in pathnames]
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
@@ -119,6 +122,9 @@ class LoadSession(sublime_plugin.WindowCommand):
 					window.new_file().run_command('insert', {'characters': file[7:]})
 				else:
 					window.open_file(file)
+
+			for view in window.views():
+				view.set_status('ss', path.basename(session))
 
 class DeleteSession(sublime_plugin.WindowCommand):
 	def run(self):
