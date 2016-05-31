@@ -1,6 +1,6 @@
 from glob import glob
 import json
-from os import path
+from os import path, makedirs, unlink
 import sublime
 import sublime_plugin
 
@@ -32,9 +32,9 @@ class SaveSession(sublime_plugin.WindowCommand):
 		session = path.join(get_path(), name)
 
 		try:
-			os.makedirs(get_path(), exist_ok=True)
+			makedirs(get_path(), exist_ok=True)
 			open(session, 'w').close()
-			os.unlink(session)
+			unlink(session)
 		except OSError:
 			error_message("Invalid Session Name:", session)
 			return
@@ -141,4 +141,4 @@ class DeleteSession(sublime_plugin.WindowCommand):
 
 	def handle_selection(self, idx):
 		if idx >= 0:
-			os.unlink(path.join(get_path(), get_sessions()[idx]))
+			unlink(path.join(get_path(), get_sessions()[idx]))
