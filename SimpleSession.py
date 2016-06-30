@@ -23,23 +23,21 @@ def get_sessions():
 def generate_name():
     return datetime.now().strftime('%Y%m%d-%H.%M.%S')
 
+def prompt_get_session_name(them, ondone):
+	them.window.show_input_panel(
+		"Session name:",
+		generate_name(),
+		on_done=ondone,
+		on_change=None,
+		on_cancel=None
+	)
 
 class SaveSession(sublime_plugin.WindowCommand):
 	def run(self):
-		self.get_session_name_and_save()
-
-	def get_session_name_and_save(self):
-		self.window.show_input_panel(
-			"Session name:",
-			generate_name(),
-			on_done=self.save_session,
-			on_change=None,
-			on_cancel=None
-		)
+		prompt_get_session_name(self, self.save_session) 
 
 	def save_session(self, name):
-		name = name + file_extension
-		session = path.join(get_path(), name)
+		session = path.join(get_path(), name + file_extension)
 
 		try:
 			makedirs(get_path(), exist_ok=True)
@@ -71,15 +69,10 @@ class SaveSession(sublime_plugin.WindowCommand):
 		with open(session, 'w') as sess_file:
 			json.dump(data, sess_file, indent=4)
 
+
 class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 	def run(self):
-		self.window.show_input_panel(
-			"Session name:",
-			generate_name(),
-			on_done=self.save_and_close_session,
-			on_change=None,
-			on_cancel=None
-		)
+		prompt_get_session_name(self, self.save_and_close_session) 
 
 	def save_and_close_session(self, name):
 		super(SaveAndCloseSession, self).save_session(name)
@@ -87,6 +80,7 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 		for view in self.window.views():
 			view.set_status('ss', '')
 			view.close()
+
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
@@ -134,6 +128,7 @@ class LoadSession(sublime_plugin.WindowCommand):
 
 			for view in window.views():
 				view.set_status('ss', path.basename(session))
+
 
 class DeleteSession(sublime_plugin.WindowCommand):
 	def run(self):
