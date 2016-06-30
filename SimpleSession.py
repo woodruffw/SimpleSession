@@ -19,6 +19,7 @@ def get_path():
 
 def getSessionFilePaths():
 	paths = glob(path.join(get_path(), '*' + file_extension))
+	exp = re.compile('(\d{8}-\d{2}\.\d{2}\.\d{2}\.simplesession)$')
 	autoSessions = []
 	namedSessions = []
 	
