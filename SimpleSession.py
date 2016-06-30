@@ -5,6 +5,7 @@ from datetime import datetime
 
 import sublime
 import sublime_plugin
+import os
 
 file_extension = '.simplesession'
 
@@ -14,14 +15,16 @@ def error_message(*args):
 def get_path():
 	return path.join(sublime.packages_path(), 'User', 'simplesession')
 
-def get_pathnames():
-	return glob(path.join(get_path(), '*' + file_extension))
+def getSessionFilePaths():
+	paths = glob(path.join(get_path(), '*' + file_extension))
+	sorted(paths, key=lambda x: os.path.getmtime(x), reverse=True)
+	return paths
 
-def get_sessions():
-	return [path.basename(p) for p in get_pathnames()]
+def getSessionFileNames():
+	return [path.basename(p).rsplit(file_extension,1)[0] for p in getSessionFilePaths()]
 
 def generate_name():
-    return datetime.now().strftime('%Y%m%d-%H.%M.%S')
+	return datetime.now().strftime('%Y%m%d-%H.%M.%S')
 
 def prompt_get_session_name(them, ondone):
 	them.window.show_input_panel(
@@ -84,7 +87,7 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
-		sessions = get_sessions()
+		sessions = getSessionFileNames()
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
@@ -97,7 +100,7 @@ class LoadSession(sublime_plugin.WindowCommand):
 
 	def handle_selection(self, idx):
 		if idx >= 0:
-			self.load(path.join(get_path(), get_sessions()[idx]))
+			self.load(getSessionFilePaths()[idx])
 
 	def load(self, session):
 		with open(session) as sess_file:
@@ -132,7 +135,7 @@ class LoadSession(sublime_plugin.WindowCommand):
 
 class DeleteSession(sublime_plugin.WindowCommand):
 	def run(self):
-		sessions = get_sessions()
+		sessions = getSessionFileNames()
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to delete.")
@@ -145,4 +148,4 @@ class DeleteSession(sublime_plugin.WindowCommand):
 
 	def handle_selection(self, idx):
 		if idx >= 0:
-			unlink(path.join(get_path(), get_sessions()[idx]))
+			unlink(getSessionFilePaths()[idx])
