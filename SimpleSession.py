@@ -1,8 +1,15 @@
 from glob import glob
 import json
 from os import path, makedirs, unlink
+from datetime import datetime
+
 import sublime
 import sublime_plugin
+import os
+import re
+
+file_extension = '.simplesession'
+default_filename_format = '%Y%m%d-%H.%M.%S'
 
 def error_message(*args):
 	sublime.error_message(' '.join(args))
@@ -10,26 +17,44 @@ def error_message(*args):
 def get_path():
 	return path.join(sublime.packages_path(), 'User', 'simplesession')
 
-def get_sessions():
-	pathnames = glob(path.join(get_path(), '*'))
-	names = [path.basename(p) for p in pathnames]
-	return names
+def getSessionFilePaths():
+	paths = glob(path.join(get_path(), '*' + file_extension))
+	exp = re.compile('(\d{8}-\d{2}\.\d{2}\.\d{2}\.simplesession)$')
+	autoSessions = []
+	namedSessions = []
+	
+	for entry in paths:
+		if exp.search(entry) is not None:
+			autoSessions.append(entry)
+		else:
+			namedSessions.append(entry)
+	
+	autoSessions = sorted(autoSessions, key=lambda x: os.path.getmtime(x), reverse=True)
+	namedSessions = sorted(namedSessions, key=lambda x: os.path.getmtime(x), reverse=True)	
+	sortedpaths = namedSessions + autoSessions
+	return sortedpaths
+
+def getSessionFileNames():
+	return [path.basename(p).rsplit(file_extension,1)[0] for p in getSessionFilePaths()]
+
+def generate_name():
+	return datetime.now().strftime(default_filename_format)
+
+def prompt_get_session_name(them, ondone):
+	them.window.show_input_panel(
+		"Session name:",
+		generate_name(),
+		on_done=ondone,
+		on_change=None,
+		on_cancel=None
+	)
 
 class SaveSession(sublime_plugin.WindowCommand):
 	def run(self):
-		self.get_session_name_and_save()
-
-	def get_session_name_and_save(self):
-		self.window.show_input_panel(
-			"Session name:",
-			"",
-			on_done=self.save_session,
-			on_change=None,
-			on_cancel=None
-		)
+		prompt_get_session_name(self, self.save_session) 
 
 	def save_session(self, name):
-		session = path.join(get_path(), name)
+		session = path.join(get_path(), name + file_extension)
 
 		try:
 			makedirs(get_path(), exist_ok=True)
@@ -61,15 +86,10 @@ class SaveSession(sublime_plugin.WindowCommand):
 		with open(session, 'w') as sess_file:
 			json.dump(data, sess_file, indent=4)
 
+
 class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 	def run(self):
-		self.window.show_input_panel(
-			"Session name:",
-			"",
-			on_done=self.save_and_close_session,
-			on_change=None,
-			on_cancel=None
-		)
+		prompt_get_session_name(self, self.save_and_close_session) 
 
 	def save_and_close_session(self, name):
 		super(SaveAndCloseSession, self).save_session(name)
@@ -78,10 +98,10 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 			view.set_status('ss', '')
 			view.close()
 
+
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
-		pathnames = glob(path.join(get_path(), '*'))
-		sessions = [path.basename(p) for p in pathnames]
+		sessions = getSessionFileNames()
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
@@ -94,7 +114,7 @@ class LoadSession(sublime_plugin.WindowCommand):
 
 	def handle_selection(self, idx):
 		if idx >= 0:
-			self.load(path.join(get_path(), get_sessions()[idx]))
+			self.load(getSessionFilePaths()[idx])
 
 	def load(self, session):
 		with open(session) as sess_file:
@@ -126,9 +146,10 @@ class LoadSession(sublime_plugin.WindowCommand):
 			for view in window.views():
 				view.set_status('ss', path.basename(session))
 
+
 class DeleteSession(sublime_plugin.WindowCommand):
 	def run(self):
-		sessions = get_sessions()
+		sessions = getSessionFileNames()
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to delete.")
@@ -141,4 +162,4 @@ class DeleteSession(sublime_plugin.WindowCommand):
 
 	def handle_selection(self, idx):
 		if idx >= 0:
-			unlink(path.join(get_path(), get_sessions()[idx]))
+			unlink(getSessionFilePaths()[idx])
