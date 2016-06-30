@@ -1,8 +1,12 @@
 from glob import glob
 import json
 from os import path, makedirs, unlink
+from datetime import datetime
+
 import sublime
 import sublime_plugin
+
+file_extension = '.simplesession'
 
 def error_message(*args):
 	sublime.error_message(' '.join(args))
@@ -10,10 +14,15 @@ def error_message(*args):
 def get_path():
 	return path.join(sublime.packages_path(), 'User', 'simplesession')
 
+def get_pathnames():
+	return glob(path.join(get_path(), '*' + file_extension))
+
 def get_sessions():
-	pathnames = glob(path.join(get_path(), '*'))
-	names = [path.basename(p) for p in pathnames]
-	return names
+	return [path.basename(p) for p in get_pathnames()]
+
+def generate_name():
+    return datetime.now().strftime('%Y%m%d-%H.%M.%S')
+
 
 class SaveSession(sublime_plugin.WindowCommand):
 	def run(self):
@@ -22,13 +31,14 @@ class SaveSession(sublime_plugin.WindowCommand):
 	def get_session_name_and_save(self):
 		self.window.show_input_panel(
 			"Session name:",
-			"",
+			generate_name(),
 			on_done=self.save_session,
 			on_change=None,
 			on_cancel=None
 		)
 
 	def save_session(self, name):
+		name = name + file_extension
 		session = path.join(get_path(), name)
 
 		try:
@@ -65,7 +75,7 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 	def run(self):
 		self.window.show_input_panel(
 			"Session name:",
-			"",
+			generate_name(),
 			on_done=self.save_and_close_session,
 			on_change=None,
 			on_cancel=None
@@ -80,8 +90,7 @@ class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
 
 class LoadSession(sublime_plugin.WindowCommand):
 	def run(self):
-		pathnames = glob(path.join(get_path(), '*'))
-		sessions = [path.basename(p) for p in pathnames]
+		sessions = get_sessions()
 
 		if not sessions:
 			sublime.message_dialog("No sessions available to load.")
