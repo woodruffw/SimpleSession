@@ -189,3 +189,22 @@ class DeleteSession(sublime_plugin.WindowCommand):
     def handle_selection(self, idx):
         if idx >= 0:
             unlink(getSessionFilePaths()[idx])
+
+
+class EditSession(sublime_plugin.WindowCommand):
+    def run(self):
+        sessions = getSessionFileNames()
+
+        if not sessions:
+            sublime.message_dialog("No sessions available to edit.")
+            return
+
+        sublime.active_window().show_quick_panel(
+            sessions,
+            self.handle_selection
+        )
+
+    def handle_selection(self, idx):
+        if idx >= 0:
+            file = getSessionFilePaths()[idx]
+            self.window.open_file(file)

@@ -14,5 +14,9 @@
 	{
 		"caption": "SimpleSession: Delete",
 		"command": "delete_session"
+	},
+	{
+		"caption": "SimpleSession: Edit",
+		"command": "edit_session"
 	}
 ]
