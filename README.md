@@ -43,6 +43,7 @@ SimpleSession: Delete
 SimpleSession: Load
 SimpleSession: Save
 SimpleSession: Save and Close
+SimpleSession: Edit
 ```
 
 `Delete` and `Load` give you a list of sessions to chose from, and `Save`
@@ -57,4 +58,5 @@ save_session
 save_and_close_session
 load_session
 delete_session
+edit_session
 ```
