@@ -10,7 +10,7 @@ import re
 
 file_extension = '.simplesession'
 default_filename_format = '%Y%m%d-%H.%M.%S'
-
+on_query_completions_callbacks = {}
 
 def plugin_loaded():
     update_old_session_files()
@@ -61,19 +61,30 @@ def generate_name():
     return datetime.now().strftime(default_filename_format)
 
 
-def prompt_get_session_name(them, ondone):
-    them.window.show_input_panel(
+def prompt_get_session_name(them, ondone, onchange):
+    return them.window.show_input_panel(
         "Session name:",
         generate_name(),
         on_done=ondone,
-        on_change=None,
+        on_change=onchange,
         on_cancel=None
     )
 
+class InputCompletionsListener(sublime_plugin.EventListener):
+    def on_query_completions(self, view, prefix, locations):
+        if view.id() in on_query_completions_callbacks.keys():
+            return on_query_completions_callbacks[view.id()](prefix, locations)
+
 
 class SaveSession(sublime_plugin.WindowCommand):
+    input_panel = None
+
     def run(self):
-        prompt_get_session_name(self, self.save_session)
+        self.input_panel = prompt_get_session_name(self, self.save_session, self.input_changed)
+        self.register_callbacks()
+
+    def register_callbacks(self):
+        on_query_completions_callbacks[self.input_panel.id()] = lambda prefix, locations: self.on_query_completions(prefix, locations)
 
     def save_session(self, name):
         session = path.join(get_path(), name + file_extension)
@@ -109,10 +120,41 @@ class SaveSession(sublime_plugin.WindowCommand):
         with open(session, 'w') as sess_file:
             json.dump(data, sess_file, indent=4)
 
+    def input_changed(self, session_name_prefix):
+        """
+            on input changed open autocomplete menu with a delay
+        """
+        if len(session_name_prefix) > 0 and \
+        self.input_panel and \
+        self.input_panel.command_history(0)[0] not in ['insert_completion', 'insert_best_completion']: #remove the looping
+            if self.input_panel.is_auto_complete_visible():
+                self.input_panel.run_command('hide_auto_complete')
+            delay = 500
+            sublime.set_timeout(lambda: self.run_autocomplete(), delay)
+        else:
+            return
+
+    def run_autocomplete(self):
+        self.input_panel.run_command('auto_complete')
+
+    def on_query_completions(self, prefix, locations):
+        if len(prefix) > 0:
+            completions_list = getSessionFileNames()            
+            completions_list = [["{0}\t hit Tab to insert".format(item), item] for item in completions_list if item.startswith(prefix)]
+            if len(completions_list) == 1 and completions_list[0][1] != prefix:
+                completions_list += [["{0}\t hit Tab to insert".format(prefix), prefix]]
+            return (
+                        completions_list,
+                        sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
+                    )
+        else: #if no prefix return empty list
+            return
+
 
 class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
     def run(self):
-        prompt_get_session_name(self, self.save_and_close_session)
+        self.input_panel = prompt_get_session_name(self, self.save_and_close_session, self.input_changed)
+        self.register_callbacks()
 
     def save_and_close_session(self, name):
         super(SaveAndCloseSession, self).save_session(name)
