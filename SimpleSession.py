@@ -134,16 +134,13 @@ class SaveSession(sublime_plugin.WindowCommand):
             return
 
     def run_autocomplete(self):
-        self.input_panel.run_command('auto_complete')
+        self.input_panel.run_command('auto_complete', {'disable_auto_insert': True})
 
     def on_query_completions(self, prefix, locations):
         if len(prefix) > 0:
             completions_list = getSessionFileNames()
             #needed the "hit Tab" label due to https://github.com/SublimeTextIssues/Core/issues/1727            
             completions_list = [["{0}\t hit Tab to insert".format(item), item] for item in completions_list if item.startswith(prefix)]
-            if len(completions_list) == 1 and completions_list[0][1] != prefix:
-                #workaround for https://github.com/SublimeTextIssues/Core/issues/2425
-                completions_list += [["{0}\t hit Tab to insert".format(prefix), prefix]]
             return (
                         completions_list,
                         sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
