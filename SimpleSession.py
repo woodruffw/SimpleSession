@@ -129,8 +129,7 @@ class SaveSession(sublime_plugin.WindowCommand):
         self.input_panel.command_history(0)[0] not in ['insert_completion', 'insert_best_completion']: #remove the looping
             if self.input_panel.is_auto_complete_visible():
                 self.input_panel.run_command('hide_auto_complete')
-            delay = 500
-            sublime.set_timeout(lambda: self.run_autocomplete(), delay)
+            sublime.set_timeout(lambda: self.run_autocomplete(), 500)
         else:
             return
 
@@ -149,7 +148,7 @@ class SaveSession(sublime_plugin.WindowCommand):
                         completions_list,
                         sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
                     )
-        else: #if no prefix return empty list
+        else: #if no prefix return None
             return
 
 
