@@ -10,7 +10,8 @@ import re
 
 file_extension = '.simplesession'
 default_filename_format = '%Y%m%d-%H.%M.%S'
-on_query_completions_callbacks = {}
+query_completion_cbs = {}
+
 
 def plugin_loaded():
     update_old_session_files()
@@ -70,21 +71,26 @@ def prompt_get_session_name(them, ondone, onchange):
         on_cancel=None
     )
 
+
 class InputCompletionsListener(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        if view.id() in on_query_completions_callbacks.keys():
-            return on_query_completions_callbacks[view.id()](prefix, locations)
+        if view.id() in query_completion_cbs.keys():
+            return query_completion_cbs[view.id()](prefix, locations)
 
 
 class SaveSession(sublime_plugin.WindowCommand):
     input_panel = None
 
     def run(self):
-        self.input_panel = prompt_get_session_name(self, self.save_session, self.input_changed)
+        self.input_panel = prompt_get_session_name(self,
+                                                   self.save_session,
+                                                   self.input_changed)
         self.register_callbacks()
 
     def register_callbacks(self):
-        on_query_completions_callbacks[self.input_panel.id()] = lambda prefix, locations: self.on_query_completions(prefix, locations)
+        query_completion_cbs[self.input_panel.id()] = \
+            lambda prefix, locations: self.on_query_completions(prefix,
+                                                                locations)
 
     def save_session(self, name):
         session = path.join(get_path(), name + file_extension)
@@ -122,11 +128,12 @@ class SaveSession(sublime_plugin.WindowCommand):
 
     def input_changed(self, session_name_prefix):
         """
-            on input changed open autocomplete menu with a delay
+            When the input changes, open autocomplete menu with a delay.
         """
         if len(session_name_prefix) > 0 and \
-        self.input_panel and \
-        self.input_panel.command_history(0)[0] not in ['insert_completion', 'insert_best_completion']: #remove the looping
+                self.input_panel and \
+                self.input_panel.command_history(0)[0] not in \
+                ['insert_completion', 'insert_best_completion']:
             if self.input_panel.is_auto_complete_visible():
                 self.input_panel.run_command('hide_auto_complete')
             sublime.set_timeout(lambda: self.run_autocomplete(), 500)
@@ -134,24 +141,27 @@ class SaveSession(sublime_plugin.WindowCommand):
             return
 
     def run_autocomplete(self):
-        self.input_panel.run_command('auto_complete', {'disable_auto_insert': True})
+        self.input_panel.run_command('auto_complete',
+                                     {'disable_auto_insert': True})
 
     def on_query_completions(self, prefix, locations):
         if len(prefix) > 0:
-            completions_list = getSessionFileNames()
-            #needed the "hit Tab" label due to https://github.com/SublimeTextIssues/Core/issues/1727            
-            completions_list = [["{0}\t hit Tab to insert".format(item), item] for item in completions_list if item.startswith(prefix)]
+            completions = getSessionFileNames()
+            # See: https://github.com/SublimeTextIssues/Core/issues/1727
+            completions = [["{0}\t hit Tab to insert".format(item), item] for
+                           item in completions if item.startswith(prefix)]
             return (
-                        completions_list,
-                        sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
+                        completions,
+                        sublime.INHIBIT_WORD_COMPLETIONS |
+                        sublime.INHIBIT_EXPLICIT_COMPLETIONS
                     )
-        else: #if no prefix return None
-            return
 
 
 class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
     def run(self):
-        self.input_panel = prompt_get_session_name(self, self.save_and_close_session, self.input_changed)
+        self.input_panel = prompt_get_session_name(self,
+                                                   self.save_and_close_session,
+                                                   self.input_changed)
         self.register_callbacks()
 
     def save_and_close_session(self, name):
