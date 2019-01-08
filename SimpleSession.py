@@ -216,8 +216,10 @@ class LoadSession(sublime_plugin.WindowCommand):
                 if file.startswith('buffer:'):
                     window.new_file().run_command('insert',
                                                   {'characters': file[7:]})
-                else:
+                elif path.isfile(file):
                     window.open_file(file)
+                else:
+                    print("nonexistent file in session: ", file)
 
             for view in window.views():
                 view.set_status('ss', path.basename(session))
