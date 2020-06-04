@@ -1,9 +1,11 @@
 SimpleSession
 =============
 
+![license](https://raster.shields.io/badge/license-MIT%20with%20restrictions-green.png)
+
 SimpleSession is a tiny session manager for Sublime Text (3).
 
-It's based on
+It was originally based on
 [Session Manager](https://github.com/Zeeker/sublime-SessionManager),
 which is a lot better than Sublime's default session management but doesn't
 allow per-window saving or layout saving.
