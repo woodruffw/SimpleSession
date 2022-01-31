@@ -8,8 +8,8 @@ import sublime_plugin
 import os
 import re
 
-file_extension = '.simplesession'
-default_filename_format = '%Y%m%d-%H.%M.%S'
+file_extension = ".simplesession"
+default_filename_format = "%Y%m%d-%H.%M.%S"
 query_completion_cbs = {}
 
 
@@ -18,24 +18,24 @@ def plugin_loaded():
 
 
 def update_old_session_files():
-    paths = glob(path.join(get_path(), '*'))
+    paths = glob(path.join(get_path(), "*"))
 
     for entry in paths:
-        if not entry.endswith('.simplesession'):
-            rename(entry, entry + '.simplesession')
+        if not entry.endswith(".simplesession"):
+            rename(entry, entry + ".simplesession")
 
 
 def error_message(*args):
-    sublime.error_message(' '.join(args))
+    sublime.error_message(" ".join(args))
 
 
 def get_path():
-    return path.join(sublime.packages_path(), 'User', 'simplesession')
+    return path.join(sublime.packages_path(), "User", "simplesession")
 
 
-def getSessionFilePaths():
-    paths = glob(path.join(get_path(), '*' + file_extension))
-    exp = re.compile('(\d{8}-\d{2}\.\d{2}\.\d{2}\.simplesession)$')
+def get_session_file_paths():
+    paths = glob(path.join(get_path(), "*" + file_extension))
+    exp = re.compile(r"(\d{8}-\d{2}\.\d{2}\.\d{2}\.simplesession)$")
     autoSessions = []
     namedSessions = []
 
@@ -45,17 +45,18 @@ def getSessionFilePaths():
         else:
             namedSessions.append(entry)
 
-    autoSessions = sorted(autoSessions, key=lambda x: os.path.getmtime(x),
-                          reverse=True)
-    namedSessions = sorted(namedSessions, key=lambda x: os.path.getmtime(x),
-                           reverse=True)
+    autoSessions = sorted(autoSessions, key=lambda x: os.path.getmtime(x), reverse=True)
+    namedSessions = sorted(
+        namedSessions, key=lambda x: os.path.getmtime(x), reverse=True
+    )
     sortedpaths = namedSessions + autoSessions
     return sortedpaths
 
 
-def getSessionFileNames():
-    return [path.basename(p).rsplit(file_extension, 1)[0]
-            for p in getSessionFilePaths()]
+def get_session_file_names():
+    return [
+        path.basename(p).rsplit(file_extension, 1)[0] for p in get_session_file_paths()
+    ]
 
 
 def generate_name():
@@ -68,7 +69,7 @@ def prompt_get_session_name(them, ondone, onchange):
         generate_name(),
         on_done=ondone,
         on_change=onchange,
-        on_cancel=None
+        on_cancel=None,
     )
 
 
@@ -82,22 +83,22 @@ class SaveSession(sublime_plugin.WindowCommand):
     input_panel = None
 
     def run(self):
-        self.input_panel = prompt_get_session_name(self,
-                                                   self.save_session,
-                                                   self.input_changed)
+        self.input_panel = prompt_get_session_name(
+            self, self.save_session, self.input_changed
+        )
         self.register_callbacks()
 
     def register_callbacks(self):
-        query_completion_cbs[self.input_panel.id()] = \
-            lambda prefix, locations: self.on_query_completions(prefix,
-                                                                locations)
+        query_completion_cbs[
+            self.input_panel.id()
+        ] = lambda prefix, locations: self.on_query_completions(prefix, locations)
 
     def save_session(self, name):
         session = path.join(get_path(), name + file_extension)
 
         try:
             makedirs(get_path(), exist_ok=True)
-            open(session, 'w').close()
+            open(session, "w").close()
             unlink(session)
         except OSError:
             error_message("Invalid Session Name:", session)
@@ -114,95 +115,92 @@ class SaveSession(sublime_plugin.WindowCommand):
                 if view.file_name():
                     file_list.append(view.file_name())
                 else:
-                    file_list.append("buffer:" + view.substr(sublime.Region(0,
-                                     view.size())))
+                    file_list.append(
+                        "buffer:" + view.substr(sublime.Region(0, view.size()))
+                    )
                 file_groups[i] = file_list
 
-        data = {
-            'groups': file_groups,
-            'layout': self.window.get_layout()
-        }
+        data = {"groups": file_groups, "layout": self.window.get_layout()}
 
-        with open(session, 'w') as sess_file:
+        with open(session, "w") as sess_file:
             json.dump(data, sess_file, indent=4)
 
     def input_changed(self, session_name_prefix):
         """
-            When the input changes, open autocomplete menu with a delay.
+        When the input changes, open autocomplete menu with a delay.
         """
-        if len(session_name_prefix) > 0 and \
-                self.input_panel and \
-                self.input_panel.command_history(0)[0] not in \
-                ['insert_completion', 'insert_best_completion']:
+        if (
+            len(session_name_prefix) > 0
+            and self.input_panel
+            and self.input_panel.command_history(0)[0]
+            not in ["insert_completion", "insert_best_completion"]
+        ):
             if self.input_panel.is_auto_complete_visible():
-                self.input_panel.run_command('hide_auto_complete')
+                self.input_panel.run_command("hide_auto_complete")
             sublime.set_timeout(lambda: self.run_autocomplete(), 500)
         else:
             return
 
     def run_autocomplete(self):
-        self.input_panel.run_command('auto_complete',
-                                     {'disable_auto_insert': True})
+        self.input_panel.run_command("auto_complete", {"disable_auto_insert": True})
 
     def on_query_completions(self, prefix, locations):
         if len(prefix) > 0:
-            completions = getSessionFileNames()
+            completions = get_session_file_names()
             # See: https://github.com/SublimeTextIssues/Core/issues/1727
-            completions = [["{0}\t hit Tab to insert".format(item), item] for
-                           item in completions if item.startswith(prefix)]
+            completions = [
+                ["{0}\t hit Tab to insert".format(item), item]
+                for item in completions
+                if item.startswith(prefix)
+            ]
             return (
-                        completions,
-                        sublime.INHIBIT_WORD_COMPLETIONS |
-                        sublime.INHIBIT_EXPLICIT_COMPLETIONS
-                    )
+                completions,
+                sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS,
+            )
 
 
 class SaveAndCloseSession(SaveSession, sublime_plugin.WindowCommand):
     def run(self):
-        self.input_panel = prompt_get_session_name(self,
-                                                   self.save_and_close_session,
-                                                   self.input_changed)
+        self.input_panel = prompt_get_session_name(
+            self, self.save_and_close_session, self.input_changed
+        )
         self.register_callbacks()
 
     def save_and_close_session(self, name):
         super(SaveAndCloseSession, self).save_session(name)
 
         for view in self.window.views():
-            view.set_status('ss', '')
+            view.set_status("ss", "")
             view.close()
 
 
 class LoadSession(sublime_plugin.WindowCommand):
     def run(self):
-        sessions = getSessionFileNames()
+        sessions = get_session_file_names()
 
         if not sessions:
             sublime.message_dialog("No sessions available to load.")
             return
 
-        sublime.active_window().show_quick_panel(
-            sessions,
-            self.handle_selection
-        )
+        sublime.active_window().show_quick_panel(sessions, self.handle_selection)
 
     def handle_selection(self, idx):
         if idx >= 0:
-            self.load(getSessionFilePaths()[idx])
+            self.load(get_session_file_paths()[idx])
 
     def load(self, session):
         with open(session) as sess_file:
             data = json.load(sess_file)
 
-        groups = data['groups']
-        layout = data['layout']
+        groups = data["groups"]
+        layout = data["layout"]
 
         window = self.window
-        open_files = [view.file_name() for view in window.views()
-                      if view.file_name()]
+        open_files = [view.file_name() for view in window.views() if view.file_name()]
 
         # if the current window has open files, load the session in a new one
         if open_files:
-            sublime.run_command('new_window')
+            sublime.run_command("new_window")
             window = sublime.active_window()
 
         window.set_layout(layout)
@@ -213,50 +211,43 @@ class LoadSession(sublime_plugin.WindowCommand):
             for file in files:
                 # if the string starts with buffer, it's an inline buffer
                 # and not a filename
-                if file.startswith('buffer:'):
-                    window.new_file().run_command('insert',
-                                                  {'characters': file[7:]})
+                if file.startswith("buffer:"):
+                    window.new_file().run_command("insert", {"characters": file[7:]})
                 elif path.isfile(file):
                     window.open_file(file)
                 else:
                     print("nonexistent file in session: ", file)
 
             for view in window.views():
-                view.set_status('ss', path.basename(session))
+                view.set_status("ss", path.basename(session))
 
 
 class DeleteSession(sublime_plugin.WindowCommand):
     def run(self):
-        sessions = getSessionFileNames()
+        sessions = get_session_file_names()
 
         if not sessions:
             sublime.message_dialog("No sessions available to delete.")
             return
 
-        sublime.active_window().show_quick_panel(
-            sessions,
-            self.handle_selection
-        )
+        sublime.active_window().show_quick_panel(sessions, self.handle_selection)
 
     def handle_selection(self, idx):
         if idx >= 0:
-            unlink(getSessionFilePaths()[idx])
+            unlink(get_session_file_paths()[idx])
 
 
 class EditSession(sublime_plugin.WindowCommand):
     def run(self):
-        sessions = getSessionFileNames()
+        sessions = get_session_file_names()
 
         if not sessions:
             sublime.message_dialog("No sessions available to edit.")
             return
 
-        sublime.active_window().show_quick_panel(
-            sessions,
-            self.handle_selection
-        )
+        sublime.active_window().show_quick_panel(sessions, self.handle_selection)
 
     def handle_selection(self, idx):
         if idx >= 0:
-            file = getSessionFilePaths()[idx]
+            file = get_session_file_paths()[idx]
             self.window.open_file(file)
